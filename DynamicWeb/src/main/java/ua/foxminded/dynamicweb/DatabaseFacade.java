@@ -1,4 +1,3 @@
-
 package ua.foxminded.dynamicweb;
 
 import java.sql.Connection;
@@ -10,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseFacade {
-	
-	
 	public static List<String> getBooks() {
 		List<String> result = new ArrayList<String>();
 
