@@ -32,7 +32,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 		updateProcessor.registerBot(this);
 	}
 
-	@Override
 	public String getBotUsername() {
 		return botName;
 	}

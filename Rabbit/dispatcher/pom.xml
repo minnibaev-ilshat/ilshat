@@ -10,7 +10,7 @@
 	<name>dispatcher</name>
 
 	<properties>
-		<telegrambot.starter.version>6.1.0</telegrambot.starter.version>
+		
 	</properties>
 
 	<dependencies>
