@@ -30,14 +30,13 @@ public class ConsumerServiceImpl implements ConsumerService {
 	@Override
 	@RabbitListener(queues = "${spring.rabbitmq.queues.doc-message-update}")
 	public void consumeDocMessageUpdates(Update update) {
-		// TODO Auto-generated method stub
-
+		mainService.processDocMessage(update);
 	}
 
 	@Override
 	@RabbitListener(queues = "${spring.rabbitmq.queues.photo-message-update}")
 	public void consumePhotoMessageUpdates(Update update) {
-		// TODO Auto-generated method stub
+		mainService.processPhotoMessage(update);
 
 	}
 
