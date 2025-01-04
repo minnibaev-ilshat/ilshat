@@ -6,12 +6,16 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import common.com.minnibaev.entity.AppDocument;
+import common.com.minnibaev.entity.AppPhoto;
 import common.com.minnibaev.entity.AppUser;
 import common.com.minnibaev.entity.enums.UserState;
 import lombok.extern.log4j.Log4j2;
 import common.com.minnibaev.dao.AppUserDAO;
 import node.com.minnibaev.dao.RawDataDAO;
 import node.com.minnibaev.entity.RawData;
+import node.com.minnibaev.exceptions.UploadFileException;
+import node.com.minnibaev.service.FileService;
 import node.com.minnibaev.service.MainService;
 import node.com.minnibaev.service.ProducerService;
 import node.com.minnibaev.service.enums.ServiceCommands;
@@ -23,12 +27,15 @@ public class MainServiceImpl implements MainService {
 	private final RawDataDAO rawDataDAO;
 	private final ProducerService producerService;
 	private final AppUserDAO appUserDAO;
+	private final FileService fileService;
 
 	@Autowired
-	public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDAO) {
+	public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDAO,
+			FileService fileService) {
 		this.rawDataDAO = rawDataDAO;
 		this.producerService = producerService;
 		this.appUserDAO = appUserDAO;
+		this.fileService = fileService;
 	}
 
 	@Override
@@ -38,11 +45,11 @@ public class MainServiceImpl implements MainService {
 		var userState = appUser.getState();
 		var receivedMessage = update.getMessage().getText();
 		var output = "";
-
-		if (ServiceCommands.CANCEL.equals(receivedMessage)) {
+		var serviceCommand = ServiceCommands.fromValue(receivedMessage);
+		if (ServiceCommands.CANCEL.equals(serviceCommand)) {
 			output = cancelProcess(appUser);
 		} else if (UserState.BASIC_STATE.equals(userState)) {
-			output = processServiceCommand(appUser, receivedMessage);
+			output = processServiceCommand(appUser, serviceCommand);
 		} else if (UserState.WAIT_FOR_EMAIL_STATE.equals(userState)) {
 			// TODO add email
 
@@ -64,8 +71,8 @@ public class MainServiceImpl implements MainService {
 
 	}
 
-	private String processServiceCommand(AppUser appUser, String cmd) {
-		if (ServiceCommands.REGISTRATION.equals(cmd)) {
+	private String processServiceCommand(AppUser appUser, ServiceCommands cmd) {
+		if (ServiceCommands.REGISTRATION == cmd) {
 			// TODO add registration
 		}
 		if (ServiceCommands.START.equals(cmd)) {
@@ -113,8 +120,17 @@ public class MainServiceImpl implements MainService {
 		if (isNotAllowToSendContent(chatID, appUser)) {
 			return;
 		}
-		// TODO add uploading photo
-		sendAnswer("The photo uploaded", chatID);
+		try {
+			AppPhoto photo = fileService.proccessPhoto(update.getMessage());
+			// TODO add the download link generation
+			var answer = "Photo is uploaded, link...";
+			sendAnswer(answer, chatID);
+		} catch (UploadFileException e) {
+			System.out.println("NODE: Uploading is failed");
+			log.error(e);
+			var error = "Uploading failed, please, try again";
+			sendAnswer(error, chatID);
+		}
 	}
 
 	@Override
@@ -123,10 +139,20 @@ public class MainServiceImpl implements MainService {
 		var appUser = findOrSaveAppUser(update);
 		var chatID = update.getMessage().getChatId();
 		if (isNotAllowToSendContent(chatID, appUser)) {
+			System.out.println("NODE: User is not allowed to send message");
 			return;
 		}
-		// TODO add uploading photo
-		sendAnswer("The document uploaded", chatID);
+		try {
+			AppDocument doc = fileService.proccessDoc(update.getMessage());
+			// TODO add the download link generation
+			var answer = "Doc is uploaded, link...";
+			sendAnswer(answer, chatID);
+		} catch (UploadFileException e) {
+			System.out.println("NODE: Uploading is failed");
+			log.error(e);
+			var error = "Uploading failed, please, try again";
+			sendAnswer(error, chatID);
+		}
 	}
 
 	private boolean isNotAllowToSendContent(Long chatID, AppUser appUser) {
