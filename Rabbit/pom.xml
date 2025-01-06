@@ -48,6 +48,9 @@
 		<module>node</module>
 		<module>common</module>
 		<module>simple</module>
+		<module>rest-service</module>
+		<module>rest_service</module>
+		<module>mail_service</module>
 	</modules>
 
 	<build>
