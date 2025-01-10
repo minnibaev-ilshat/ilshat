@@ -24,9 +24,11 @@ import common.com.minnibaev.dao.BinaryContentDAO;
 import common.com.minnibaev.entity.AppDocument;
 import common.com.minnibaev.entity.AppPhoto;
 import common.com.minnibaev.entity.BinaryContent;
+import common.com.minnibaev.utils.CryptoTool;
 import lombok.extern.log4j.Log4j2;
 import node.com.minnibaev.exceptions.UploadFileException;
 import node.com.minnibaev.service.FileService;
+import node.com.minnibaev.service.enums.LinkType;
 
 @Log4j2
 @Service
@@ -41,16 +43,23 @@ public class FileServiceImpl implements FileService {
 	@Value("${service.file_storage.uri}")
 	private String fileStorageUri;
 
+	@Value("${link.address}")
+	private String linkAddress;
+
 	private final AppDocumentDAO appDocumentDAO;
 
 	private final AppPhotoDAO appPhotoDAO;
 
 	private final BinaryContentDAO binaryContentDAO;
 
-	public FileServiceImpl(AppDocumentDAO appDocumentDAO, BinaryContentDAO binaryContentDAO, AppPhotoDAO appPhotoDAO) {
+	private final CryptoTool cryptoTool;
+
+	public FileServiceImpl(AppDocumentDAO appDocumentDAO, BinaryContentDAO binaryContentDAO, AppPhotoDAO appPhotoDAO,
+			CryptoTool cryptoTool) {
 		this.appDocumentDAO = appDocumentDAO;
 		this.binaryContentDAO = binaryContentDAO;
 		this.appPhotoDAO = appPhotoDAO;
+		this.cryptoTool = cryptoTool;
 	}
 
 	@Override
@@ -72,7 +81,9 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public AppPhoto proccessPhoto(Message externalMessage) {
 		// TODO add list of photos handling
-		PhotoSize telegramPhoto = externalMessage.getPhoto().get(0);
+		int telegramPhotoSizeCount = externalMessage.getPhoto().size();
+		int photoIndex = telegramPhotoSizeCount > 1 ? externalMessage.getPhoto().size() - 1 : 0;
+		var telegramPhoto = externalMessage.getPhoto().get(photoIndex);
 		String fileID = telegramPhoto.getFileId();
 		ResponseEntity<String> responseEntity = getFilePath(fileID);
 		if (responseEntity.getStatusCode() == HttpStatus.OK) {
@@ -129,6 +140,12 @@ public class FileServiceImpl implements FileService {
 		HttpHeaders headers = new HttpHeaders();
 		HttpEntity<String> request = new HttpEntity<String>(headers);
 		return restTemplate.exchange(fileInfoUri, HttpMethod.GET, request, String.class, token, fileID);
+	}
+
+	@Override
+	public String generateLink(Long docId, LinkType linkType) {
+		var hash = cryptoTool.hashOf(docId);
+		return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
 	}
 
 }

@@ -15,9 +15,11 @@ import common.com.minnibaev.dao.AppUserDAO;
 import node.com.minnibaev.dao.RawDataDAO;
 import node.com.minnibaev.entity.RawData;
 import node.com.minnibaev.exceptions.UploadFileException;
+import node.com.minnibaev.service.AppUserService;
 import node.com.minnibaev.service.FileService;
 import node.com.minnibaev.service.MainService;
 import node.com.minnibaev.service.ProducerService;
+import node.com.minnibaev.service.enums.LinkType;
 import node.com.minnibaev.service.enums.ServiceCommands;
 
 @Log4j2
@@ -28,14 +30,16 @@ public class MainServiceImpl implements MainService {
 	private final ProducerService producerService;
 	private final AppUserDAO appUserDAO;
 	private final FileService fileService;
+	private final AppUserService appUserService;
 
 	@Autowired
 	public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDAO,
-			FileService fileService) {
+			FileService fileService, AppUserService appUserService) {
 		this.rawDataDAO = rawDataDAO;
 		this.producerService = producerService;
 		this.appUserDAO = appUserDAO;
 		this.fileService = fileService;
+		this.appUserService = appUserService;
 	}
 
 	@Override
@@ -51,7 +55,7 @@ public class MainServiceImpl implements MainService {
 		} else if (UserState.BASIC_STATE.equals(userState)) {
 			output = processServiceCommand(appUser, serviceCommand);
 		} else if (UserState.WAIT_FOR_EMAIL_STATE.equals(userState)) {
-			// TODO add email
+			output = appUserService.setEmail(appUser, receivedMessage);
 
 		} else {
 			output = "Unknown command. Please, press /cancel";
@@ -73,7 +77,7 @@ public class MainServiceImpl implements MainService {
 
 	private String processServiceCommand(AppUser appUser, ServiceCommands cmd) {
 		if (ServiceCommands.REGISTRATION == cmd) {
-			// TODO add registration
+			return appUserService.registerUser(appUser);
 		}
 		if (ServiceCommands.START.equals(cmd)) {
 			return "Hello, to see all command press /help";
@@ -97,14 +101,14 @@ public class MainServiceImpl implements MainService {
 
 	public AppUser findOrSaveAppUser(Update update) {
 		User telegramUser = update.getMessage().getFrom();
-		AppUser persistentUser = appUserDAO.findByTelegramUserId(telegramUser.getId());
-		if (persistentUser == null) {
+		var optional = appUserDAO.findByTelegramUserId(telegramUser.getId());
+		if (optional.isEmpty()) {
 			AppUser newUser = AppUser.builder().firstName(telegramUser.getFirstName())
 					.lastName(telegramUser.getLastName()).username(telegramUser.getUserName())
-					.telegramUserId(telegramUser.getId()).isActive(true).state(UserState.BASIC_STATE).build();
+					.telegramUserId(telegramUser.getId()).isActive(false).state(UserState.BASIC_STATE).build();
 			return appUserDAO.save(newUser);
 		}
-		return persistentUser;
+		return optional.get();
 	}
 
 	private void saveRawData(Update update) {
@@ -122,8 +126,8 @@ public class MainServiceImpl implements MainService {
 		}
 		try {
 			AppPhoto photo = fileService.proccessPhoto(update.getMessage());
-			// TODO add the download link generation
-			var answer = "Photo is uploaded, link...";
+			String link = fileService.generateLink(photo.getId(), LinkType.GET_PHOTO);
+			var answer = "Photo is uploaded, click the link, please \n" + link;
 			sendAnswer(answer, chatID);
 		} catch (UploadFileException e) {
 			System.out.println("NODE: Uploading is failed");
@@ -144,8 +148,8 @@ public class MainServiceImpl implements MainService {
 		}
 		try {
 			AppDocument doc = fileService.proccessDoc(update.getMessage());
-			// TODO add the download link generation
-			var answer = "Doc is uploaded, link...";
+			String link = fileService.generateLink(doc.getId(), LinkType.GET_DOC);
+			var answer = "Doc is uploaded, click the link, please \n" + link;
 			sendAnswer(answer, chatID);
 		} catch (UploadFileException e) {
 			System.out.println("NODE: Uploading is failed");
