@@ -23,21 +23,21 @@ public class ConsumerServiceImpl implements ConsumerService {
 	@Override
 	@RabbitListener(queues = "${spring.rabbitmq.queues.text-message-update}")
 	public void consumeTextMessageUpdates(Update update) {
-		System.out.println("NODE: text message received");
+		System.out.println("NODE: text message from rabbitMQ received");
 		mainService.processTextMessage(update);
 	}
 
 	@Override
 	@RabbitListener(queues = "${spring.rabbitmq.queues.doc-message-update}")
 	public void consumeDocMessageUpdates(Update update) {
-		System.out.println("NODE: doc message received");
+		System.out.println("NODE: doc message from rabbitMQ received");
 		mainService.processDocMessage(update);
 	}
 
 	@Override
 	@RabbitListener(queues = "${spring.rabbitmq.queues.photo-message-update}")
 	public void consumePhotoMessageUpdates(Update update) {
-		System.out.println("NODE: photo message received");
+		System.out.println("NODE: photo message from rabbitMQ received");
 		mainService.processPhotoMessage(update);
 
 	}

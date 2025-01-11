@@ -14,15 +14,12 @@ public enum ServiceCommands {
 		return cmd;
 	}
 
-	public final boolean equals(String text) {
-		return this.toString().equals(text);
-	}
-
 	public static ServiceCommands fromValue(String receivedMessage) {
 		for (ServiceCommands c : ServiceCommands.values()) {
-			if (receivedMessage.equals(c))
+			if (c.cmd.equals(receivedMessage))
 				return c;
 		}
-		return null;
+			return null;
+		
 	}
 }

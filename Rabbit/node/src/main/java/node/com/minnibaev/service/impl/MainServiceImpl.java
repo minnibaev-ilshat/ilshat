@@ -69,8 +69,8 @@ public class MainServiceImpl implements MainService {
 
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(chatId);
-		sendMessage.setText("message from NODE");
-		System.out.println("NODE has sent message");
+		sendMessage.setText(output);
+		System.out.println("NODE has sent message to telegram");
 		producerService.producerAnswer(sendMessage);
 
 	}
@@ -89,7 +89,7 @@ public class MainServiceImpl implements MainService {
 	}
 
 	private String help() {
-		String cmds = "/help \n /start \n /registration";
+		String cmds = "/help \n/start \n/registration";
 		return cmds;
 	}
 
@@ -162,7 +162,7 @@ public class MainServiceImpl implements MainService {
 	private boolean isNotAllowToSendContent(Long chatID, AppUser appUser) {
 		var userState = appUser.getState();
 		if (!appUser.getIsActive()) {
-			var error = "Log in or sign up";
+			var error = "Please, register your email adress, press /registration";
 			sendAnswer(error, chatID);
 			return true;
 		} else if (!UserState.BASIC_STATE.equals(userState)) {
