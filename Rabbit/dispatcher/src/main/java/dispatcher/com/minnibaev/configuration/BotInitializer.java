@@ -11,21 +11,21 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import dispatcher.com.minnibaev.controller.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@Component
+//@Slf4j
+//@Component
 public class BotInitializer {
 
-	@Autowired
-	TelegramBot bot;
-
-	@EventListener({ ContextRefreshedEvent.class })
-	public void init() throws TelegramApiException {
-		TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-		try {
-			telegramBotsApi.registerBot(bot);
-		} catch (TelegramApiException e) {
-			log.error("Error occured: " + e.getMessage());
-		}
-	}
+//	@Autowired
+//	TelegramBot bot;
+//
+//	@EventListener({ ContextRefreshedEvent.class })
+//	public void init() throws TelegramApiException {
+//		TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
+//		try {
+//			telegramBotsApi.registerBot(bot);
+//		} catch (TelegramApiException e) {
+//			log.error("Error occured: " + e.getMessage());
+//		}
+//	}
 
 }
