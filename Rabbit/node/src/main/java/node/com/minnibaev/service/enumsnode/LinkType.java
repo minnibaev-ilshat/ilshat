@@ -1,4 +1,4 @@
-package node.com.minnibaev.service.enums;
+package node.com.minnibaev.service.enumsnode;
 
 public enum LinkType {
 	GET_DOC("file/get-doc"), GET_PHOTO("file/get-photo");

@@ -3,23 +3,20 @@ package node.com.minnibaev.service.impl;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import common.com.minnibaev.dao.AppUserDAO;
 import common.com.minnibaev.dto.MailParams;
 import common.com.minnibaev.entity.AppUser;
 import common.com.minnibaev.entity.enums.UserState;
 import common.com.minnibaev.utils.CryptoTool;
+import lombok.RequiredArgsConstructor;
+import node.com.minnibaev.configuration.RabbitConfiguration;
 import node.com.minnibaev.service.AppUserService;
 
+@RequiredArgsConstructor
 @Service
 public class AppUserServiceImpl implements AppUserService {
 
@@ -27,14 +24,9 @@ public class AppUserServiceImpl implements AppUserService {
 
 	private final CryptoTool cryptoTool;
 
-	@Value("${service.mail.uri}")
-	private String mailServiceUri;
-
-	public AppUserServiceImpl(AppUserDAO appUserDAO, CryptoTool cryptoTool) {
-		super();
-		this.appUserDAO = appUserDAO;
-		this.cryptoTool = cryptoTool;
-	}
+	private final RabbitTemplate rabbitTemplate;
+	
+	private final RabbitConfiguration rabbitConfiguration;
 
 	@Override
 	public String registerUser(AppUser appUser) {
@@ -62,27 +54,16 @@ public class AppUserServiceImpl implements AppUserService {
 			appUser = appUserDAO.save(appUser);
 
 			var cryptoUserId = cryptoTool.hashOf(appUser.getId());
-			var response = sendRequestToMailService(cryptoUserId, email);
-			if (response.getStatusCode() != HttpStatus.OK) {
-				var message = String.format("Some problems with sending email", email);
-				System.out.println(message);
-				appUser.setEmail(null);
-				appUserDAO.save(appUser);
-				return message;
-			}
+			sendRegistrationMail(cryptoUserId, email);
 			return "Email is sent, check your mailbox, please";
 		}
 		return "Email is using by other user. Put in another email adress, please";
+
 	}
 
-	private ResponseEntity<?> sendRequestToMailService(String cryptoUserId, String email) {
-		var restTemplate = new RestTemplate();
-		var headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		var mailParams = MailParams.builder().id(cryptoUserId).emailTo(email).build();
-		var request = new HttpEntity<MailParams>(mailParams, headers);
-
-		return restTemplate.exchange(mailServiceUri, HttpMethod.POST, request, String.class);
+	private void sendRegistrationMail(String cryptoUserId, String email) {
+		MailParams mailParams = MailParams.builder().emailTo(email).id(cryptoUserId).build();
+		rabbitTemplate.convertAndSend(rabbitConfiguration.getRegistrationMailQueue(), mailParams);
 	}
 
 }

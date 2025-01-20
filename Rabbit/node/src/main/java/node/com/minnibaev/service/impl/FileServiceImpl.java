@@ -28,7 +28,7 @@ import common.com.minnibaev.utils.CryptoTool;
 import lombok.extern.log4j.Log4j2;
 import node.com.minnibaev.exceptions.UploadFileException;
 import node.com.minnibaev.service.FileService;
-import node.com.minnibaev.service.enums.LinkType;
+import node.com.minnibaev.service.enumsnode.LinkType;
 
 @Log4j2
 @Service

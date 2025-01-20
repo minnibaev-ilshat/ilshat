@@ -10,8 +10,10 @@ import common.com.minnibaev.entity.AppDocument;
 import common.com.minnibaev.entity.AppPhoto;
 import common.com.minnibaev.entity.AppUser;
 import common.com.minnibaev.entity.enums.UserState;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import common.com.minnibaev.dao.AppUserDAO;
+import node.com.minnibaev.configuration.RabbitConfiguration;
 import node.com.minnibaev.dao.RawDataDAO;
 import node.com.minnibaev.entity.RawData;
 import node.com.minnibaev.exceptions.UploadFileException;
@@ -19,10 +21,11 @@ import node.com.minnibaev.service.AppUserService;
 import node.com.minnibaev.service.FileService;
 import node.com.minnibaev.service.MainService;
 import node.com.minnibaev.service.ProducerService;
-import node.com.minnibaev.service.enums.LinkType;
-import node.com.minnibaev.service.enums.ServiceCommands;
+import node.com.minnibaev.service.enumsnode.LinkType;
+import node.com.minnibaev.service.enumsnode.ServiceCommands;
 
-@Log4j2
+//@Log4j2
+@RequiredArgsConstructor
 @Service
 public class MainServiceImpl implements MainService {
 
@@ -31,16 +34,7 @@ public class MainServiceImpl implements MainService {
 	private final AppUserDAO appUserDAO;
 	private final FileService fileService;
 	private final AppUserService appUserService;
-
-	@Autowired
-	public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDAO,
-			FileService fileService, AppUserService appUserService) {
-		this.rawDataDAO = rawDataDAO;
-		this.producerService = producerService;
-		this.appUserDAO = appUserDAO;
-		this.fileService = fileService;
-		this.appUserService = appUserService;
-	}
+	private final RabbitConfiguration rabbitConfiguration;
 
 	@Override
 	public void processTextMessage(Update update) {
@@ -59,7 +53,7 @@ public class MainServiceImpl implements MainService {
 
 		} else {
 			output = "Unknown command. Please, press /cancel";
-			log.error("Unknown user state: " + userState);
+//			log.error("Unknown user state: " + userState);
 		}
 
 		sendAnswer(output, update.getMessage().getChatId());
@@ -71,7 +65,7 @@ public class MainServiceImpl implements MainService {
 		sendMessage.setChatId(chatId);
 		sendMessage.setText(output);
 		System.out.println("NODE has sent message to telegram");
-		producerService.producerAnswer(sendMessage);
+		producerService.producerAnswer(rabbitConfiguration.getAnswerMessageQueue(), sendMessage);
 
 	}
 
@@ -131,7 +125,7 @@ public class MainServiceImpl implements MainService {
 			sendAnswer(answer, chatID);
 		} catch (UploadFileException e) {
 			System.out.println("NODE: Uploading is failed");
-			log.error(e);
+//			log.error(e);
 			var error = "Uploading failed, please, try again";
 			sendAnswer(error, chatID);
 		}
@@ -153,7 +147,7 @@ public class MainServiceImpl implements MainService {
 			sendAnswer(answer, chatID);
 		} catch (UploadFileException e) {
 			System.out.println("NODE: Uploading is failed");
-			log.error(e);
+//			log.error(e);
 			var error = "Uploading failed, please, try again";
 			sendAnswer(error, chatID);
 		}

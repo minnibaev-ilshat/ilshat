@@ -1,4 +1,4 @@
-package node.com.minnibaev.service.enums;
+package node.com.minnibaev.service.enumsnode;
 
 public enum ServiceCommands {
 
